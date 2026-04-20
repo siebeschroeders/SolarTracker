@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solar Home Run – Live Route Tracker</title>
 
-    <!-- Leaflet -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
@@ -270,6 +269,39 @@
         background: var(--navy);
       }
 
+      /* This CSS filter turns the Carto Dark Matter base map into a deep, rich dark blue */
+      .leaflet-tile-pane {
+        filter: sepia(100%) hue-rotate(190deg) saturate(300%) brightness(0.4)
+          contrast(1.2);
+      }
+
+      /* Custom UI Layer for Logos Overlay */
+      #custom-ui-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Let clicks pass through to map */
+        z-index: 1000;
+      }
+
+      #logo-top-left {
+        position: absolute;
+        top: 20px;
+        left: 60px; /* Offset to not overlap Leaflet zoom controls */
+        height: 30px;
+      }
+
+      #logo-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 450px;
+        opacity: 0.15; /* Subtle watermark style, adjust as needed */
+      }
+
       /* Override Leaflet popup */
       .leaflet-popup-content-wrapper {
         background: var(--navy2) !important;
@@ -377,7 +409,6 @@
     </style>
   </head>
   <body>
-    <!-- HEADER -->
     <header>
       <div class="header-left">
         <svg
@@ -472,9 +503,7 @@
       </div>
     </header>
 
-    <!-- LAYOUT -->
     <div class="layout">
-      <!-- SIDEBAR -->
       <div class="sidebar">
         <div class="sidebar-section">
           <h3>Route Stints</h3>
@@ -518,7 +547,6 @@
 
         <div class="sidebar-section">
           <h3>Partner Stops</h3>
-          <!-- Placeholder stops — replace with your real partners & times -->
           <div class="stop-item">
             <div class="stop-num">01</div>
             <div class="stop-info">
@@ -579,11 +607,18 @@
         </div>
       </div>
 
-      <!-- MAP -->
       <div style="position: relative; flex: 1; height: 100%">
         <div id="map" style="position: absolute; inset: 0"></div>
 
-        <!-- Legend -->
+        <div id="custom-ui-layer">
+          <img
+            src="Langwerpig_TekstWit.svg"
+            alt="Small Top Left Logo"
+            id="logo-top-left"
+          />
+          <img src="Logo_TSHR.svg" alt="Main Center Logo" id="logo-center" />
+        </div>
+
         <div class="map-legend">
           <div class="legend-title">Legend</div>
           <div class="legend-row">
@@ -838,7 +873,7 @@
           [51.271829, 5.08595],
           [51.272067, 5.085906],
           [51.272184, 5.085884],
-          [51.272351, 5.085854],
+          [51.273351, 5.085854],
           [51.272413, 5.085839],
           [51.273282, 5.085672],
           [51.27349, 5.085631],
@@ -1151,7 +1186,7 @@
           [51.208181, 4.384673],
           [51.209043, 4.386014],
           [51.209363, 4.386497],
-          [51.210126, 4.38757],
+          [51.20126, 4.38757],
           [51.211336, 4.388985],
           [51.213265, 4.391054],
           [51.213516, 4.391308],
@@ -2137,7 +2172,6 @@
       ];
 
       // ─── PLACEHOLDER PARTNER STOPS — fill in your real data ────────────────────
-      // { lat, lng, name, time, description }
       const PARTNER_STOPS = [
         {
           lat: 51.225966,
@@ -2146,9 +2180,6 @@
           time: "08:00",
           desc: "Departure point",
         },
-        // Add your real partner stops here:
-        // { lat: 51.298658, lng: 5.10855, name: 'DEME',   time: '10:30', desc: 'Partner visit' },
-        // { lat: 51.249355, lng: 4.313902, name: 'Indupol', time: '13:00', desc: 'Partner visit' },
         {
           lat: 50.874781,
           lng: 4.707553,
@@ -2159,38 +2190,36 @@
       ];
 
       // ─── LIVE GPS CONFIG ────────────────────────────────────────────────────────
-      // To enable live tracking, set LIVE_ENABLED = true and point GPS_ENDPOINT
-      // at your backend URL that returns: { lat: number, lng: number, speed?: number, timestamp?: string }
-      // Example with Firebase: replace with your Firebase Realtime Database REST URL
       const LIVE_ENABLED = false;
       const GPS_ENDPOINT =
         "https://YOUR-FIREBASE-DB.firebaseio.com/gps/latest.json";
       const POLL_INTERVAL_MS = 5000;
 
-      // ─── INIT MAP ───────────────────────────────────────────────────────────────
-      // Belgium bounding box with a little padding
-      const BELGIUM_BOUNDS = L.latLngBounds(
-        L.latLng(49.4, 2.4), // SW — slightly outside Belgium
-        L.latLng(51.6, 6.5), // NE
-      );
+      // ─── INIT MAP & COMPUTE ROUTE BOUNDS ─────────────────────────────────────────
+      const allPoints = STINTS.flat();
+      const routeBounds = L.latLngBounds(allPoints);
 
+      // Initialize the map bound specifically to the route bounds, plus padding
       const map = L.map("map", {
-        center: [50.5, 4.5],
+        center: routeBounds.getCenter(),
         zoom: 8,
         zoomControl: true,
         attributionControl: true,
-        minZoom: 7,
-        maxZoom: 16,
-        maxBounds: BELGIUM_BOUNDS,
-        maxBoundsViscosity: 1.0, // hard wall — can't pan outside
+        maxBounds: routeBounds.pad(0.2), // Limits the user from panning far outside the route
+        maxBoundsViscosity: 1.0,
       });
 
-      // Dark blue tile — Stadia Alidade Smooth Dark (deep navy, matches reference)
+      // Calculate the minimum zoom so they can't zoom out into space
+      map.fitBounds(routeBounds, { padding: [50, 50] });
+      map.options.minZoom = map.getZoom();
+
+      // Dark map tile (styled deep blue via CSS filter above)
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
         {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+          attribution:
+            "&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap",
+          maxZoom: 20,
         },
       ).addTo(map);
 
@@ -2210,10 +2239,6 @@
           smoothFactor: 1.2,
         }).addTo(map);
       });
-
-      // Fit map tightly to the full route on load
-      const allPoints = STINTS.flat();
-      map.fitBounds(L.latLngBounds(allPoints), { padding: [50, 50] });
 
       // ─── COMPUTE TOTAL DISTANCE ─────────────────────────────────────────────────
       function haversine(a, b) {
@@ -2363,6 +2388,9 @@
           stintPolylines.forEach((poly) =>
             poly.setStyle({ opacity: 0.95, weight: 2.5, color: "#39ff6e" }),
           );
+
+          // Fit back to the full route bounds
+          map.fitBounds(routeBounds, { padding: [50, 50] });
         }, 4000);
       }
     </script>
