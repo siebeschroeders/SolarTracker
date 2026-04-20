@@ -92,44 +92,42 @@
         background: var(--prussian-blue);
       }
 
-      .leaflet-tile-pane {
-        filter: sepia(100%) hue-rotate(185deg) saturate(180%) brightness(0.5)
-          contrast(1.1);
-      }
-
       /* ─── CUSTOM MARKERS ─────────────────────────────────── */
       .live-marker-wrapper {
         position: relative;
         transition: transform 0.3s;
       }
       .live-ring {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         border: 2px solid var(--green-munseli);
         position: absolute;
-        top: -20px;
-        left: -20px;
+        top: -22px;
+        left: -22px;
         animation: ring-pulse 2s infinite;
+        box-shadow: 0 0 12px var(--green-munseli);
       }
       .live-core {
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: var(--green-munseli);
-        border: 2px solid var(--prussian-blue);
+        border: 2px solid #0d1b2e;
         position: absolute;
-        top: -7px;
-        left: -7px;
-        box-shadow: 0 0 15px var(--green-munseli);
+        top: -8px;
+        left: -8px;
+        box-shadow:
+          0 0 20px var(--green-munseli),
+          0 0 40px rgba(0, 229, 160, 0.4);
       }
       @keyframes ring-pulse {
         0% {
           transform: scale(1);
-          opacity: 0.8;
+          opacity: 0.9;
         }
         100% {
-          transform: scale(2.2);
+          transform: scale(2.5);
           opacity: 0;
         }
       }
@@ -145,6 +143,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 0 10px rgba(0, 229, 160, 0.5);
       }
       .partner-marker div {
         transform: rotate(45deg);
@@ -156,13 +155,98 @@
 
       /* Popup Styling */
       .leaflet-popup-content-wrapper {
-        background: var(--prussian-blue);
-        color: var(--brand-white);
-        border: 1px solid var(--green-munseli);
+        background: var(--prussian-blue) !important;
+        color: var(--brand-white) !important;
+        border: 1px solid var(--green-munseli) !important;
         font-family: "Muli", sans-serif;
       }
       .leaflet-popup-tip {
-        background: var(--green-munseli);
+        background: var(--prussian-blue) !important;
+      }
+
+      /* Glow filter for SVG overlay (routes) */
+      .leaflet-overlay-pane svg {
+        filter: drop-shadow(0 0 3px rgba(0, 229, 160, 0.4))
+          drop-shadow(0 0 7px rgba(0, 229, 160, 0.15));
+      }
+
+      /* ─── PARTNER TOOLTIP (hover) ────────────────────────── */
+      .partner-tt.leaflet-tooltip {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .partner-tt.leaflet-tooltip::before {
+        display: none !important;
+      }
+      .partner-tt-inner {
+        background: #fff;
+        border: 2px solid var(--green-munseli);
+        border-radius: 10px;
+        padding: 8px 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        min-width: 110px;
+        box-shadow: 0 4px 16px rgba(0, 170, 119, 0.25);
+        pointer-events: none;
+      }
+      .partner-tt-inner img {
+        max-height: 38px;
+        max-width: 110px;
+        object-fit: contain;
+      }
+      .partner-tt-inner span {
+        color: var(--prussian-blue);
+        font-family: "Muli", sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .partner-tt-fallback {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--prussian-blue);
+        line-height: 1;
+      }
+
+      /* ─── PARTNER POPUP (click) ──────────────────────────── */
+      .partner-popup-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 4px 2px;
+      }
+      .partner-popup-logo {
+        background: #fff;
+        border-radius: 8px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 140px;
+        min-height: 64px;
+      }
+      .partner-popup-logo img {
+        max-height: 52px;
+        max-width: 140px;
+        object-fit: contain;
+      }
+      .partner-popup-name {
+        color: var(--green-munseli);
+        font-size: 15px;
+        font-weight: 900;
+        text-align: center;
+      }
+      .partner-popup-role {
+        color: rgba(249, 251, 251, 0.55);
+        font-size: 11px;
+        text-align: center;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
       }
     </style>
   </head>
@@ -189,14 +273,43 @@
       let firstFix = true;
 
       // ─── PARTNER DATA ──────────────────────────────────────────────────
-      // Mapping names to the start of each stint based on your prompt
       const PARTNERS = [
-        { name: "Sibelco (Start)", coords: STINTS[0][0] },
-        { name: "Indupol", coords: STINTS[1][0] },
-        { name: "DEME", coords: STINTS[2][0] },
-        { name: "PwC", coords: STINTS[3][0] },
-        { name: "KBC", coords: STINTS[3][STINTS[3].length - 1] },
-        { name: "Groep T (Finish)", coords: STINTS[4][STINTS[4].length - 1] },
+        {
+          name: "Sibelco",
+          role: "Start",
+          coords: STINTS[0][0],
+          logo: "Sibelco_logo.png",
+        },
+        {
+          name: "Indupol",
+          role: "Partner Stop",
+          coords: STINTS[1][0],
+          logo: "INDUPOL_LOGO_RGB-01-1.svg",
+        },
+        {
+          name: "DEME",
+          role: "Partner Stop",
+          coords: STINTS[2][0],
+          logo: "DEME.BR_BIG.svg",
+        },
+        {
+          name: "PwC",
+          role: "Partner Stop",
+          coords: STINTS[3][0],
+          logo: "PWC.svg",
+        },
+        {
+          name: "KBC",
+          role: "Partner Stop",
+          coords: STINTS[4][0],
+          logo: "KBC_logo.svg",
+        },
+        {
+          name: "Groep T",
+          role: "Finish",
+          coords: STINTS[4][STINTS[4].length - 1],
+          logo: null,
+        },
       ];
 
       // ─── INIT MAP ──────────────────────────────────────────────────────
@@ -206,16 +319,17 @@
       const map = L.map("map", {
         center: routeBounds.getCenter(),
         zoom: 10,
+        maxBounds: routeBounds.pad(0.2),
+        maxBoundsViscosity: 1.0,
+        minZoom: 10,
+        maxZoom: 18,
         zoomControl: false,
       });
 
-      // Replace YOUR_API_KEY with the actual key from your dashboard
+      // ─── TILE LAYER: dark-matter-nolabels for cleaner blue tint ────────
       L.tileLayer(
-        `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=6fe6796d-13c6-4fc1-ac29-be89345d2eba`,
-        {
-          attribution:
-            '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>',
-        },
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        { maxZoom: 20, subdomains: "abcd" },
       ).addTo(map);
 
       // Draw Route in Green Munseli
@@ -236,9 +350,35 @@
       });
 
       PARTNERS.forEach((p) => {
+        const logoImg = p.logo
+          ? `<img src="${p.logo}" alt="${p.name}" />`
+          : `<div class="partner-tt-fallback">${p.name[0]}</div>`;
+
+        const tooltipHtml = `
+          <div class="partner-tt-inner">
+            ${logoImg}
+            <span>${p.name}</span>
+          </div>`;
+
+        const popupLogoHtml = p.logo
+          ? `<img src="${p.logo}" alt="${p.name}" />`
+          : `<span style="color:var(--prussian-blue);font-weight:900;font-size:22px">${p.name}</span>`;
+
+        const popupHtml = `
+          <div class="partner-popup-inner">
+            <div class="partner-popup-logo">${popupLogoHtml}</div>
+            <div class="partner-popup-name">${p.name}</div>
+            <div class="partner-popup-role">${p.role}</div>
+          </div>`;
+
         L.marker(p.coords, { icon: partnerIcon })
           .addTo(map)
-          .bindPopup(`<b style="color:var(--green-munseli)">${p.name}</b>`);
+          .bindTooltip(tooltipHtml, {
+            className: "partner-tt",
+            direction: "top",
+            offset: [0, -22],
+          })
+          .bindPopup(popupHtml, { maxWidth: 220 });
       });
 
       map.fitBounds(routeBounds, { padding: [50, 50] });
