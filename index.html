@@ -5,11 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Innoptus Live Route Tracker</title>
 
+    <!-- Leaflet -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <!-- MapLibre GL JS -->
+    <link
+      href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+
+    <!-- MapLibre GL Leaflet binding -->
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Muli:wght@400;600;700;900&display=swap");
@@ -37,22 +48,20 @@
         overflow: hidden;
       }
 
-      /* ─── HEADER ─────────────────────────────────────────── */
+      /* ─── HEADER ──────────────────────────────────────────── */
       header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 24px;
         height: 60px;
-        background: var(--bdazzled-blue);
+        background: var(--prussian-blue);
         border-bottom: 2px solid var(--green-munseli);
         z-index: 1000;
       }
-
       .logo-img {
         height: 35px;
       }
-
       .live-badge {
         display: flex;
         align-items: center;
@@ -65,7 +74,6 @@
         font-size: 14px;
         color: var(--green-munseli);
       }
-
       .live-dot {
         width: 10px;
         height: 10px;
@@ -73,7 +81,6 @@
         background: var(--green-munseli);
         animation: pulse 1.5s infinite;
       }
-
       @keyframes pulse {
         0%,
         100% {
@@ -86,13 +93,13 @@
         }
       }
 
-      /* ─── MAP AREA ───────────────────────────────────────── */
+      /* ─── MAP ─────────────────────────────────────────────── */
       #map {
         flex: 1;
         background: var(--prussian-blue);
       }
 
-      /* ─── CUSTOM MARKERS ─────────────────────────────────── */
+      /* ─── MARKERS ─────────────────────────────────────────── */
       .live-marker-wrapper {
         position: relative;
         transition: transform 0.3s;
@@ -132,7 +139,6 @@
         }
       }
 
-      /* Partner Stop Marker */
       .partner-marker {
         width: 24px;
         height: 24px;
@@ -153,7 +159,7 @@
         border-radius: 50%;
       }
 
-      /* Popup Styling */
+      /* Popups */
       .leaflet-popup-content-wrapper {
         background: var(--prussian-blue) !important;
         color: var(--brand-white) !important;
@@ -164,13 +170,42 @@
         background: var(--prussian-blue) !important;
       }
 
-      /* Glow filter for SVG overlay (routes) */
+      /* Stint tooltip */
+      .stint-tt.leaflet-tooltip {
+        background: var(--prussian-blue) !important;
+        border: 1px solid var(--green-munseli) !important;
+        box-shadow: 0 4px 12px rgba(0, 170, 119, 0.2) !important;
+        color: var(--brand-white) !important;
+        font-family: "Muli", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 10px !important;
+        border-radius: 6px !important;
+        white-space: nowrap;
+      }
+      .stint-tt.leaflet-tooltip::before {
+        display: none !important;
+      }
+      .stint-tt-label {
+        color: var(--green-munseli);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 1px;
+      }
+
+      /* Route glow */
       .leaflet-overlay-pane svg {
         filter: drop-shadow(0 0 3px rgba(0, 229, 160, 0.4))
           drop-shadow(0 0 7px rgba(0, 229, 160, 0.15));
       }
+      .leaflet-overlay-pane path:focus {
+        outline: none !important;
+      }
 
-      /* ─── PARTNER TOOLTIP (hover) ────────────────────────── */
+      /* Partner tooltip */
       .partner-tt.leaflet-tooltip {
         background: transparent !important;
         border: none !important;
@@ -198,21 +233,8 @@
         max-width: 110px;
         object-fit: contain;
       }
-      .partner-tt-inner span {
-        color: var(--prussian-blue);
-        font-family: "Muli", sans-serif;
-        font-size: 11px;
-        font-weight: 700;
-        text-align: center;
-      }
-      .partner-tt-fallback {
-        font-size: 22px;
-        font-weight: 900;
-        color: var(--prussian-blue);
-        line-height: 1;
-      }
 
-      /* ─── PARTNER POPUP (click) ──────────────────────────── */
+      /* Partner popup */
       .partner-popup-inner {
         display: flex;
         flex-direction: column;
@@ -235,27 +257,39 @@
         max-width: 140px;
         object-fit: contain;
       }
-      .partner-popup-name {
-        color: var(--green-munseli);
-        font-size: 15px;
-        font-weight: 900;
-        text-align: center;
-      }
       .partner-popup-role {
-        color: rgba(249, 251, 251, 0.55);
-        font-size: 11px;
+        color: var(--green-munseli);
+        font-size: 12px;
+        font-weight: 700;
         text-align: center;
         letter-spacing: 0.5px;
         text-transform: uppercase;
+      }
+      .partner-popup-time {
+        color: rgba(249, 251, 251, 0.7);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      /* ─── FOOTER ──────────────────────────────────────────── */
+      footer {
+        height: 88px;
+        background: var(--prussian-blue);
+        border-top: 2px solid var(--green-munseli);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        flex-shrink: 0;
+      }
+      .footer-logo {
+        height: 68px;
       }
     </style>
   </head>
   <body>
     <header>
       <img src="Langwerpig_TekstWit.svg" alt="Innoptus Logo" class="logo-img" />
-      <div id="status-text" style="font-size: 12px; opacity: 0.8">
-        Awaiting GPS...
-      </div>
       <div class="live-badge">
         <div class="live-dot"></div>
         LIVE
@@ -264,55 +298,59 @@
 
     <div id="map"></div>
 
+    <footer>
+      <img src="Logo_TSHR.png" alt="TSHR Logo" class="footer-logo" />
+    </footer>
+
     <script src="routeData.js"></script>
     <script>
-      // ─── CONFIG ────────────────────────────────────────────────────────
+      // ─── CONFIG ────────────────────────────────────────────
       const GPS_ENDPOINT =
         "https://solar-tracker-ab9a8-default-rtdb.europe-west1.firebasedatabase.app/gps/latest.json";
       let liveMarker = null;
       let firstFix = true;
 
-      // ─── PARTNER DATA ──────────────────────────────────────────────────
+      // ─── PARTNERS ──────────────────────────────────────────
       const PARTNERS = [
         {
-          name: "Sibelco",
           role: "Start",
+          time: "07:30 – 09:00",
           coords: STINTS[0][0],
           logo: "Sibelco_logo.png",
         },
         {
-          name: "Indupol",
-          role: "Partner Stop",
+          role: "Second Stop",
+          time: "09:30 – 10:00",
           coords: STINTS[1][0],
           logo: "INDUPOL_LOGO_RGB-01-1.svg",
         },
         {
-          name: "DEME",
-          role: "Partner Stop",
+          role: "Third Stop",
+          time: "12:00 – 12:30",
           coords: STINTS[2][0],
           logo: "DEME.BR_BIG.svg",
         },
         {
-          name: "PwC",
-          role: "Partner Stop",
+          role: "Fourth Stop",
+          time: "14:00 – 15:00",
           coords: STINTS[3][0],
           logo: "PWC.svg",
         },
         {
-          name: "KBC",
-          role: "Partner Stop",
+          role: "Fifth Stop",
+          time: "16:00 – 17:00",
           coords: STINTS[4][0],
           logo: "KBC_logo.svg",
         },
         {
-          name: "Groep T",
           role: "Finish",
+          time: "17:30 – 19:00",
           coords: STINTS[4][STINTS[4].length - 1],
-          logo: null,
+          logo: "4itego.png",
         },
       ];
 
-      // ─── INIT MAP ──────────────────────────────────────────────────────
+      // ─── MAP INIT ──────────────────────────────────────────
       const allPoints = STINTS.flat();
       const routeBounds = L.latLngBounds(allPoints);
 
@@ -326,98 +364,110 @@
         zoomControl: false,
       });
 
-      // ─── TILE LAYER: dark-matter-nolabels for cleaner blue tint ────────
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        { maxZoom: 20, subdomains: "abcd" },
-      ).addTo(map);
-
-      // Draw Route in Green Munseli
-      STINTS.forEach((coords) => {
-        L.polyline(coords, {
-          color: "#00aa77",
-          weight: 5,
-          opacity: 0.75,
-        }).addTo(map);
-      });
-
-      // Add Partner Markers
-      const partnerIcon = L.divIcon({
-        className: "",
-        iconSize: [24, 24],
-        iconAnchor: [12, 24],
-        html: '<div class="partner-marker"><div></div></div>',
-      });
-
-      PARTNERS.forEach((p) => {
-        const logoImg = p.logo
-          ? `<img src="${p.logo}" alt="${p.name}" />`
-          : `<div class="partner-tt-fallback">${p.name[0]}</div>`;
-
-        const tooltipHtml = `
-          <div class="partner-tt-inner">
-            ${logoImg}
-            <span>${p.name}</span>
-          </div>`;
-
-        const popupLogoHtml = p.logo
-          ? `<img src="${p.logo}" alt="${p.name}" />`
-          : `<span style="color:var(--prussian-blue);font-weight:900;font-size:22px">${p.name}</span>`;
-
-        const popupHtml = `
-          <div class="partner-popup-inner">
-            <div class="partner-popup-logo">${popupLogoHtml}</div>
-            <div class="partner-popup-name">${p.name}</div>
-            <div class="partner-popup-role">${p.role}</div>
-          </div>`;
-
-        L.marker(p.coords, { icon: partnerIcon })
-          .addTo(map)
-          .bindTooltip(tooltipHtml, {
-            className: "partner-tt",
-            direction: "top",
-            offset: [0, -22],
-          })
-          .bindPopup(popupHtml, { maxWidth: 220 });
-      });
-
-      map.fitBounds(routeBounds, { padding: [50, 50] });
-
-      // ─── SCALING LOGIC ────────────────────────────────────────────────
-      map.on("zoomend", function () {
-        const currentZoom = map.getZoom();
-        const wrapper = document.querySelector(".live-marker-wrapper");
-        if (wrapper) {
-          let scale = currentZoom < 9 ? 0.5 : currentZoom < 12 ? 0.8 : 1.2;
-          wrapper.style.transform = `scale(${scale})`;
-        }
-      });
-
-      // ─── LIVE TRACKING ────────────────────────────────────────────────
-      function createLiveMarker(lat, lng) {
-        const icon = L.divIcon({
-          className: "",
-          iconSize: [0, 0],
-          html: `<div class="live-marker-wrapper"><div class="live-ring"></div><div class="live-core"></div></div>`,
+      // ─── BOOTSTRAP ─────────────────────────────────────────
+      fetch("mapStyle.json") // 👈 path to your JSON file
+        .then((r) => r.json())
+        .then((style) => {
+          L.maplibreGL({
+            style,
+          }).addTo(map);
+          addOverlays();
+        })
+        .catch((err) => {
+          console.warn("Style failed, falling back to CARTO:", err);
+          L.tileLayer(
+            "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+            {
+              maxZoom: 20,
+              subdomains: "abcd",
+              attribution: "© OpenStreetMap © CARTO",
+            },
+          ).addTo(map);
+          addOverlays();
         });
-        return L.marker([lat, lng], { icon, zIndexOffset: 1000 }).addTo(map);
+
+      // ─── OVERLAYS (routes + markers) ───────────────────────
+      const STINT_TIMES = [
+        { label: "Stint 1", time: "09:00 – 09:30" },
+        { label: "Stint 2", time: "10:00 – 12:00" },
+        { label: "Stint 3", time: "12:30 – 14:00" },
+        { label: "Stint 4", time: "15:00 – 16:00" },
+        { label: "Stint 5", time: "17:00 – 17:30" },
+      ];
+
+      function addOverlays() {
+        STINTS.forEach((coords, i) => {
+          L.polyline(coords, {
+            color: "#00aa77",
+            weight: 5,
+            opacity: 0.85,
+            interactive: false,
+          }).addTo(map);
+          L.polyline(coords, { color: "#00aa77", weight: 22, opacity: 0.001 })
+            .addTo(map)
+            .bindTooltip(
+              `<span class="stint-tt-label">${STINT_TIMES[i].label}</span>${STINT_TIMES[i].time}`,
+              { className: "stint-tt", sticky: true },
+            )
+            .on("click", (e) => L.DomEvent.stopPropagation(e));
+        });
+
+        const partnerIcon = L.divIcon({
+          className: "",
+          iconSize: [24, 24],
+          iconAnchor: [12, 24],
+          html: '<div class="partner-marker"><div></div></div>',
+        });
+
+        PARTNERS.forEach((p) => {
+          const ttHtml = `<div class="partner-tt-inner"><img src="${p.logo}" alt="${p.role}" /></div>`;
+          const popupHtml = `
+            <div class="partner-popup-inner">
+              <div class="partner-popup-logo"><img src="${p.logo}" alt="${p.role}" /></div>
+              <div class="partner-popup-role">${p.role}</div>
+              ${p.time ? `<div class="partner-popup-time">${p.time}</div>` : ""}
+            </div>`;
+          L.marker(p.coords, { icon: partnerIcon })
+            .addTo(map)
+            .bindTooltip(ttHtml, {
+              className: "partner-tt",
+              direction: "top",
+              offset: [0, -22],
+            })
+            .bindPopup(popupHtml, { maxWidth: 220 });
+        });
+
+        map.fitBounds(routeBounds, { padding: [50, 50] });
+      }
+
+      // ─── ZOOM SCALE ────────────────────────────────────────
+      map.on("zoomend", () => {
+        const z = map.getZoom();
+        const w = document.querySelector(".live-marker-wrapper");
+        if (w) w.style.transform = `scale(${z < 9 ? 0.5 : z < 12 ? 0.8 : 1.2})`;
+      });
+
+      // ─── LIVE GPS ──────────────────────────────────────────
+      function createLiveMarker(lat, lng) {
+        return L.marker([lat, lng], {
+          icon: L.divIcon({
+            className: "",
+            iconSize: [0, 0],
+            html: `<div class="live-marker-wrapper">
+                    <div class="live-ring"></div>
+                    <div class="live-core"></div>
+                  </div>`,
+          }),
+          zIndexOffset: 1000,
+        }).addTo(map);
       }
 
       async function fetchLivePosition() {
         try {
-          const res = await fetch(GPS_ENDPOINT);
-          const data = await res.json();
+          const data = await (await fetch(GPS_ENDPOINT)).json();
           if (!data || data.lat === undefined) return;
-
-          if (!liveMarker) {
-            liveMarker = createLiveMarker(data.lat, data.lng);
-          } else {
-            liveMarker.setLatLng([data.lat, data.lng]);
-          }
-
-          document.getElementById("status-text").textContent =
-            `Speed: ${Math.round(data.speed || 0)} km/h`;
-
+          if (!liveMarker) liveMarker = createLiveMarker(data.lat, data.lng);
+          else liveMarker.setLatLng([data.lat, data.lng]);
           if (firstFix) {
             map.flyTo([data.lat, data.lng], 14, {
               animate: true,
@@ -430,8 +480,9 @@
         }
       }
 
-      //setInterval(fetchLivePosition, 30000);
-      //fetchLivePosition();
+      // Uncomment to enable live tracking:
+      // setInterval(fetchLivePosition, 30000);
+      // fetchLivePosition();
     </script>
   </body>
 </html>
