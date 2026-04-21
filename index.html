@@ -288,6 +288,61 @@
         text-align: center;
       }
 
+      /* ─── SPONSOR MARKERS ────────────────────────────────── */
+      .sponsor-marker {
+        width: 14px;
+        height: 14px;
+        background: var(--bdazzled-blue);
+        border: 2px solid var(--brand-white);
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+      }
+      .sponsor-popup-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 4px 2px;
+      }
+      .sponsor-popup-logo {
+        background: #fff;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 130px;
+        min-height: 56px;
+      }
+      .sponsor-popup-logo.dark-bg {
+        background: var(--prussian-blue);
+      }
+      .sponsor-popup-logo img {
+        max-height: 52px;
+        max-width: 140px;
+        width: 100%;
+        object-fit: contain;
+      }
+      .sponsor-popup-placeholder {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--prussian-blue);
+        opacity: 0.3;
+      }
+      .sponsor-popup-name {
+        color: var(--brand-white);
+        font-size: 13px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .sponsor-popup-role {
+        color: var(--green-munseli);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
       /* ─── FOOTER ──────────────────────────────────────────── */
       footer {
         height: 150px;
@@ -417,6 +472,7 @@
         minZoom: 9,
         maxZoom: 18,
         zoomControl: false,
+        attributionControl: false,
       });
 
       // ─── BOOTSTRAP ─────────────────────────────────────────
@@ -448,6 +504,171 @@
         { label: "Stint 3", time: "12:30 – 14:00" },
         { label: "Stint 4", time: "15:00 – 16:00" },
         { label: "Stint 5", time: "17:00 – 17:30" },
+      ];
+
+      // ─── SPONSOR LOCATIONS ─────────────────────────────────
+      const SPONSORS = [
+        {
+          name: "ADB Safegate",
+          coords: [50.919341117150054, 4.435063024176051],
+          logo: "adb_safegate.png",
+        },
+        {
+          name: "Axalta",
+          coords: [51.01321094832159, 4.460759298102695],
+          logo: "Axalta_logo.png",
+        },
+        {
+          name: "Axxes",
+          coords: [51.2340081170945, 4.412692886089986],
+          logo: "Axxes.png",
+        },
+        {
+          name: "Bleyweert",
+          coords: [50.791463311269936, 5.453372300793283],
+          logo: "bleyweert_logo.png",
+        },
+        {
+          name: "BO Solutions",
+          coords: [50.97739452658593, 3.1215353770698275],
+          logo: "bo solutions.jpg",
+        },
+        {
+          name: "Bridgestone",
+          coords: [50.88993741443913, 4.460360501250405],
+          logo: "Bridgestone-Logo.png",
+        },
+        {
+          name: "Cematec",
+          coords: [50.960698054528834, 4.047483763384525],
+          logo: "Cematec.png",
+        },
+        {
+          name: "CNH Industrial",
+          coords: [51.12982266999852, 3.1594211823077125],
+          logo: "CNH_Industrial.svg",
+        },
+        {
+          name: "Colruyt Group Technics",
+          coords: [50.847719568134465, 4.716423643848336],
+          logo: "colruytgroup-technics.png",
+        },
+        {
+          name: "Defensie",
+          coords: [50.75597730268026, 4.781217835938311],
+          logo: "defensie.svg",
+        },
+        {
+          name: "Deufol",
+          coords: [51.151693955168014, 4.553883173537998],
+          logo: "Deufol_Logo.svg",
+        },
+        {
+          name: "Esma",
+          coords: [50.94735242189259, 5.6976501868393035],
+          logo: "esma-logo-transparant.png",
+        },
+        {
+          name: "Facom",
+          coords: [51.01209311181738, 4.464406175311157],
+          logo: "Logo_FACOM.png",
+        },
+        {
+          name: "Ford",
+          coords: [51.197650680365996, 5.311892988244854],
+          logo: "Ford_logo_flat.png",
+        },
+        {
+          name: "HAAS",
+          coords: [50.872713496853144, 4.50441599597234],
+          logo: "Haas_Automation_Logo.png",
+        },
+        {
+          name: "Henkel",
+          coords: [50.903141863057186, 4.345062011164927],
+          logo: "Henkel-Logo.svg",
+        },
+        {
+          name: "ICO Terminals",
+          coords: [51.265114052438314, 4.225711850502332],
+          logo: "ico_terminals.png",
+        },
+        {
+          name: "imec / EnergyVille",
+          coords: [50.99556188694147, 5.5391396020498815],
+          logo: "ENERGYVILLE-LOGO.png",
+        },
+        {
+          name: "Luminus",
+          coords: [50.85749349285736, 4.3564663599476035],
+          logo: "Luminus logo.png",
+        },
+        {
+          name: "Makita",
+          coords: [50.894902755327514, 4.526833545095023],
+          logo: "makita_logo.png",
+        },
+        {
+          name: "Melotte",
+          coords: [51.0080385145896, 5.38945881541211],
+          logo: "melotte-logo.jpeg",
+        },
+        {
+          name: "Nationale Loterij",
+          coords: [50.85107255036117, 4.3529668380977675],
+          logo: "nationale_loterij.png",
+        },
+        {
+          name: "Venn Telecom",
+          coords: [50.855530117353034, 4.448624621790981],
+          logo: "venn_logo.svg",
+        },
+        {
+          name: "Schaeffler",
+          coords: [51.02646176256767, 3.733012053182768],
+          logo: "Schaeffler_logo.png",
+        },
+        {
+          name: "Sirona Technologies",
+          coords: [50.85574810331664, 4.3208805415983305],
+          logo: "sirona.png",
+        },
+        {
+          name: "Syensqo",
+          coords: [50.88034953808196, 4.433416272727724],
+          logo: "Syensqo_Logo_2023.svg",
+        },
+        {
+          name: "Verloy Metaalwerken",
+          coords: [51.299900907065066, 4.831254278598857],
+          logo: "verloy.png",
+        },
+        {
+          name: "Virix",
+          coords: [51.12249658861192, 4.412315638178908],
+          logo: "virix.png",
+        },
+        {
+          name: "Vitalo Group",
+          coords: [50.94856124982686, 3.2468545663441986],
+          logo: "LOGO-VITALO.svg",
+        },
+        {
+          name: "VITO",
+          coords: [51.21882720439277, 5.090784721935154],
+          logo: "vito_logo.svg",
+        },
+        {
+          name: "Vlaio",
+          coords: [50.863321310098904, 4.356831961777455],
+          logo: "VLAIO_sponsorlogo_vol.png",
+        },
+        {
+          name: "Zenith Graphics",
+          coords: [50.87302302391765, 4.276981047834137],
+          logo: "Zenith_graphics.svg",
+          darkBg: true,
+        },
       ];
 
       function addOverlays() {
@@ -497,6 +718,28 @@
               offset: [0, -22],
             });
           }
+        });
+
+        const sponsorIcon = L.divIcon({
+          className: "",
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+          html: '<div class="sponsor-marker"></div>',
+        });
+
+        SPONSORS.forEach((s) => {
+          const logoContent = s.logo
+            ? `<img src="${s.logo}" alt="${s.name}" />`
+            : `<span class="sponsor-popup-placeholder">${s.name[0]}</span>`;
+          const popupHtml = `
+            <div class="sponsor-popup-inner">
+              <div class="sponsor-popup-logo${s.darkBg ? " dark-bg" : ""}">${logoContent}</div>
+              <div class="sponsor-popup-name">${s.name}</div>
+              <div class="sponsor-popup-role">Partner</div>
+            </div>`;
+          L.marker(s.coords, { icon: sponsorIcon })
+            .addTo(map)
+            .bindPopup(popupHtml, { maxWidth: 200 });
         });
 
         map.fitBounds(routeBounds, { padding: [50, 50] });
