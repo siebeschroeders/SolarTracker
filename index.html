@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Innoptus Live Route Tracker</title>
 
     <!-- Leaflet -->
@@ -52,45 +55,31 @@
       header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         padding: 0 24px;
         height: 60px;
         background: var(--prussian-blue);
         border-bottom: 2px solid var(--green-munseli);
         z-index: 1000;
+        flex-shrink: 0;
+      }
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
       }
       .logo-img {
         height: 35px;
+        flex-shrink: 0;
       }
-      .live-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(0, 170, 119, 0.15);
-        border: 1px solid var(--green-munseli);
-        border-radius: 4px;
-        padding: 6px 16px;
+      .header-title {
+        font-family: "Muli", sans-serif;
+        font-size: 18px;
         font-weight: 900;
-        font-size: 14px;
-        color: var(--green-munseli);
-      }
-      .live-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--green-munseli);
-        animation: pulse 1.5s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(0.8);
-          opacity: 0.5;
-        }
+        color: var(--brand-white);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        white-space: nowrap;
       }
 
       /* ─── MAP ─────────────────────────────────────────────── */
@@ -130,32 +119,32 @@
       }
       @keyframes ring-pulse {
         0% {
-          transform: scale(1);
-          opacity: 0.9;
+          transform: scale(0.2);
+          opacity: 1;
         }
         100% {
-          transform: scale(2.5);
+          transform: scale(2.8);
           opacity: 0;
         }
       }
 
       .partner-marker {
-        width: 24px;
-        height: 24px;
-        background: var(--brand-white);
+        width: 30px;
+        height: 30px;
+        background: var(--prussian-blue);
         border: 3px solid var(--green-munseli);
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 10px rgba(0, 229, 160, 0.5);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
       }
       .partner-marker div {
         transform: rotate(45deg);
-        width: 8px;
-        height: 8px;
-        background: var(--prussian-blue);
+        width: 10px;
+        height: 10px;
+        background: var(--green-munseli);
         border-radius: 50%;
       }
 
@@ -234,6 +223,33 @@
         object-fit: contain;
       }
 
+      /* Live marker popup */
+      .live-popup-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 10px 14px 2px;
+      }
+      .live-popup-label {
+        color: var(--green-munseli);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .live-popup-speed {
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--brand-white);
+        line-height: 1;
+      }
+      .live-popup-unit {
+        font-size: 11px;
+        color: rgba(249, 251, 251, 0.55);
+        font-weight: 600;
+      }
+
       /* Partner popup */
       .partner-popup-inner {
         display: flex;
@@ -245,7 +261,7 @@
       .partner-popup-logo {
         background: #fff;
         border-radius: 8px;
-        padding: 10px 14px;
+        padding: 4px 8px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -253,8 +269,9 @@
         min-height: 64px;
       }
       .partner-popup-logo img {
-        max-height: 52px;
-        max-width: 140px;
+        max-height: 72px;
+        max-width: 160px;
+        width: 100%;
         object-fit: contain;
       }
       .partner-popup-role {
@@ -273,7 +290,7 @@
 
       /* ─── FOOTER ──────────────────────────────────────────── */
       footer {
-        height: 88px;
+        height: 150px;
         background: var(--prussian-blue);
         border-top: 2px solid var(--green-munseli);
         display: flex;
@@ -281,18 +298,58 @@
         justify-content: center;
         z-index: 1000;
         flex-shrink: 0;
+        padding-bottom: env(safe-area-inset-bottom);
       }
       .footer-logo {
-        height: 68px;
+        height: 130px;
+      }
+
+      /* ─── MOBILE ───────────────────────────────────────────── */
+      @media (max-width: 540px) {
+        header {
+          height: 52px;
+          padding: 0 14px;
+        }
+        .logo-img {
+          height: 26px;
+        }
+        .header-title {
+          font-size: 14px;
+          letter-spacing: 1px;
+        }
+        .header-brand {
+          gap: 10px;
+        }
+        footer {
+          height: 64px;
+        }
+        .footer-logo {
+          height: 46px;
+        }
+        .partner-popup-logo {
+          min-width: 110px;
+          min-height: 50px;
+          padding: 8px 10px;
+        }
+        .partner-popup-logo img {
+          max-height: 40px;
+          max-width: 110px;
+        }
+        .leaflet-popup-content-wrapper {
+          max-width: 85vw !important;
+        }
       }
     </style>
   </head>
   <body>
     <header>
-      <img src="Langwerpig_TekstWit.svg" alt="Innoptus Logo" class="logo-img" />
-      <div class="live-badge">
-        <div class="live-dot"></div>
-        LIVE
+      <div class="header-brand">
+        <img
+          src="Langwerpig_TekstWit.svg"
+          alt="Innoptus Logo"
+          class="logo-img"
+        />
+        <div class="header-title">Live Tracker</div>
       </div>
     </header>
 
@@ -357,9 +414,7 @@
       const map = L.map("map", {
         center: routeBounds.getCenter(),
         zoom: 10,
-        maxBounds: routeBounds.pad(0.2),
-        maxBoundsViscosity: 1.0,
-        minZoom: 10,
+        minZoom: 9,
         maxZoom: 18,
         zoomControl: false,
       });
@@ -409,15 +464,20 @@
               `<span class="stint-tt-label">${STINT_TIMES[i].label}</span>${STINT_TIMES[i].time}`,
               { className: "stint-tt", sticky: true },
             )
-            .on("click", (e) => L.DomEvent.stopPropagation(e));
+            .on("mousedown", (e) => L.DomEvent.stop(e))
+            .on("click", (e) => L.DomEvent.stop(e))
+            .on("dblclick", (e) => L.DomEvent.stop(e));
         });
 
         const partnerIcon = L.divIcon({
           className: "",
-          iconSize: [24, 24],
-          iconAnchor: [12, 24],
+          iconSize: [30, 30],
+          iconAnchor: [15, 36],
           html: '<div class="partner-marker"><div></div></div>',
         });
+
+        const isTouch =
+          "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
         PARTNERS.forEach((p) => {
           const ttHtml = `<div class="partner-tt-inner"><img src="${p.logo}" alt="${p.role}" /></div>`;
@@ -427,14 +487,16 @@
               <div class="partner-popup-role">${p.role}</div>
               ${p.time ? `<div class="partner-popup-time">${p.time}</div>` : ""}
             </div>`;
-          L.marker(p.coords, { icon: partnerIcon })
+          const marker = L.marker(p.coords, { icon: partnerIcon })
             .addTo(map)
-            .bindTooltip(ttHtml, {
+            .bindPopup(popupHtml, { maxWidth: 220 });
+          if (!isTouch) {
+            marker.bindTooltip(ttHtml, {
               className: "partner-tt",
               direction: "top",
               offset: [0, -22],
-            })
-            .bindPopup(popupHtml, { maxWidth: 220 });
+            });
+          }
         });
 
         map.fitBounds(routeBounds, { padding: [50, 50] });
@@ -448,7 +510,15 @@
       });
 
       // ─── LIVE GPS ──────────────────────────────────────────
-      function createLiveMarker(lat, lng) {
+      function speedPopupHtml(kmh) {
+        return `<div class="live-popup-inner">
+          <div class="live-popup-label">Current Speed</div>
+          <div class="live-popup-speed">${kmh}</div>
+          <div class="live-popup-unit">km/h</div>
+        </div>`;
+      }
+
+      function createLiveMarker(lat, lng, kmh = 0) {
         return L.marker([lat, lng], {
           icon: L.divIcon({
             className: "",
@@ -459,15 +529,22 @@
                   </div>`,
           }),
           zIndexOffset: 1000,
-        }).addTo(map);
+        })
+          .addTo(map)
+          .bindPopup(speedPopupHtml(kmh), { maxWidth: 160 });
       }
 
       async function fetchLivePosition() {
         try {
           const data = await (await fetch(GPS_ENDPOINT)).json();
           if (!data || data.lat === undefined) return;
-          if (!liveMarker) liveMarker = createLiveMarker(data.lat, data.lng);
-          else liveMarker.setLatLng([data.lat, data.lng]);
+          const kmh = Math.round(data.speed || 0);
+          if (!liveMarker) {
+            liveMarker = createLiveMarker(data.lat, data.lng, kmh);
+          } else {
+            liveMarker.setLatLng([data.lat, data.lng]);
+            liveMarker.setPopupContent(speedPopupHtml(kmh));
+          }
           if (firstFix) {
             map.flyTo([data.lat, data.lng], 14, {
               animate: true,
@@ -480,7 +557,12 @@
         }
       }
 
-      // Uncomment to enable live tracking:
+      // ─── FAKE LIVE MARKER (temporary — replace with live tracking below) ──
+      const _fakePos = STINTS[1][Math.floor(STINTS[1].length / 2)];
+      liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 47);
+      // ── END FAKE MARKER ─────────────────────────────────────────────────
+
+      // Uncomment to enable live tracking (and remove fake marker above):
       // setInterval(fetchLivePosition, 30000);
       // fetchLivePosition();
     </script>
