@@ -25,8 +25,23 @@
     <!-- MapLibre GL Leaflet binding -->
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 
+    <!-- Mulish font (preconnect first for speed) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;900&display=swap"
+    />
+
+    <!-- Preload partner stop logos so tooltips show instantly -->
+    <link rel="preload" as="image" href="Sibelco_logo.png" />
+    <link rel="preload" as="image" href="INDUPOL_LOGO_RGB-01-1.svg" />
+    <link rel="preload" as="image" href="DEME.BR_BIG.svg" />
+    <link rel="preload" as="image" href="PWC.svg" />
+    <link rel="preload" as="image" href="KBC_logo.svg" />
+    <link rel="preload" as="image" href="4itego.png" />
+
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Muli:wght@400;600;700;900&display=swap");
 
       :root {
         --prussian-blue: #192c46;
@@ -44,8 +59,9 @@
       body {
         background: var(--prussian-blue);
         color: var(--brand-white);
-        font-family: "Muli", sans-serif;
+        font-family: "Mulish", sans-serif;
         height: 100vh;
+        height: 100dvh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -73,9 +89,9 @@
         flex-shrink: 0;
       }
       .header-title {
-        font-family: "Muli", sans-serif;
+        font-family: "Pier Sans", "Mulish", sans-serif;
         font-size: 18px;
-        font-weight: 900;
+        font-weight: 400;
         color: var(--brand-white);
         letter-spacing: 2px;
         text-transform: uppercase;
@@ -94,28 +110,29 @@
         transition: transform 0.3s;
       }
       .live-ring {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         border: 2px solid var(--green-munseli);
         position: absolute;
-        top: -22px;
-        left: -22px;
+        top: -24px;
+        left: -24px;
         animation: ring-pulse 2s infinite;
         box-shadow: 0 0 12px var(--green-munseli);
+        z-index: 1;
       }
       .live-core {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--green-munseli);
-        border: 2px solid #0d1b2e;
         position: absolute;
-        top: -8px;
-        left: -8px;
-        box-shadow:
-          0 0 20px var(--green-munseli),
-          0 0 40px rgba(0, 229, 160, 0.4);
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+      .live-core img {
+        height: 22px;
+        width: auto;
+        display: block;
+        pointer-events: none;
       }
       @keyframes ring-pulse {
         0% {
@@ -153,7 +170,7 @@
         background: var(--prussian-blue) !important;
         color: var(--brand-white) !important;
         border: 1px solid var(--green-munseli) !important;
-        font-family: "Muli", sans-serif;
+        font-family: "Mulish", sans-serif;
       }
       .leaflet-popup-tip {
         background: var(--prussian-blue) !important;
@@ -165,7 +182,7 @@
         border: 1px solid var(--green-munseli) !important;
         box-shadow: 0 4px 12px rgba(0, 170, 119, 0.2) !important;
         color: var(--brand-white) !important;
-        font-family: "Muli", sans-serif;
+        font-family: "Mulish", sans-serif;
         font-size: 12px;
         font-weight: 700;
         padding: 5px 10px !important;
@@ -290,12 +307,13 @@
 
       /* ─── SPONSOR MARKERS ────────────────────────────────── */
       .sponsor-marker {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         background: var(--bdazzled-blue);
-        border: 2px solid var(--brand-white);
         border-radius: 50%;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        box-shadow:
+          0 0 0 2px rgba(39, 84, 164, 0.35),
+          0 2px 6px rgba(0, 0, 0, 0.45);
       }
       .sponsor-popup-inner {
         display: flex;
@@ -341,6 +359,46 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1px;
+      }
+
+      /* ─── STALE GPS OVERLAY ──────────────────────────────── */
+      #stale-overlay {
+        position: fixed;
+        top: 78px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+        background: rgba(25, 44, 70, 0.94);
+        border: 1px solid rgba(255, 170, 0, 0.75);
+        border-radius: 10px;
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "Mulish", sans-serif;
+        color: var(--brand-white);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s;
+        backdrop-filter: blur(6px);
+        white-space: nowrap;
+      }
+      #stale-overlay.visible {
+        opacity: 1;
+      }
+      .stale-icon {
+        font-size: 18px;
+      }
+      .stale-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      .stale-desc {
+        font-size: 11px;
+        color: rgba(249, 251, 251, 0.55);
+        margin-top: 2px;
       }
 
       /* ─── FOOTER ──────────────────────────────────────────── */
@@ -409,6 +467,14 @@
     </header>
 
     <div id="map"></div>
+
+    <div id="stale-overlay">
+      <div class="stale-icon">⚠️</div>
+      <div>
+        <div class="stale-title">Location Unavailable</div>
+        <div class="stale-desc">Live tracking signal lost</div>
+      </div>
+    </div>
 
     <footer>
       <img src="Logo_TSHR.png" alt="TSHR Logo" class="footer-logo" />
@@ -483,6 +549,7 @@
             style,
           }).addTo(map);
           addOverlays();
+          map.once("moveend", centreOnLive);
         })
         .catch((err) => {
           console.warn("Style failed, falling back to CARTO:", err);
@@ -495,6 +562,7 @@
             },
           ).addTo(map);
           addOverlays();
+          map.once("moveend", centreOnLive);
         });
 
       // ─── OVERLAYS (routes + markers) ───────────────────────
@@ -550,13 +618,13 @@
         },
         {
           name: "Colruyt Group Technics",
-          coords: [50.847719568134465, 4.716423643848336],
+          coords: [50.7297052006453, 4.221956774253969],
           logo: "colruytgroup-technics.png",
         },
         {
           name: "Defensie",
           coords: [50.75597730268026, 4.781217835938311],
-          logo: "defensie.svg",
+          logo: "defensie.png",
         },
         {
           name: "Deufol",
@@ -589,9 +657,19 @@
           logo: "Henkel-Logo.svg",
         },
         {
+          name: "HP",
+          coords: [50.883201382658086, 4.447045655524263],
+          logo: "hp_logo.svg",
+        },
+        {
           name: "ICO Terminals",
-          coords: [51.265114052438314, 4.225711850502332],
+          coords: [51.30075291947924, 3.2264500836430106],
           logo: "ico_terminals.png",
+        },
+        {
+          name: "KU Leuven",
+          coords: [50.87822569389492, 4.699716026297492],
+          logo: "kuleuven_logo.png",
         },
         {
           name: "imec / EnergyVille",
@@ -722,8 +800,8 @@
 
         const sponsorIcon = L.divIcon({
           className: "",
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
           html: '<div class="sponsor-marker"></div>',
         });
 
@@ -749,7 +827,9 @@
       map.on("zoomend", () => {
         const z = map.getZoom();
         const w = document.querySelector(".live-marker-wrapper");
-        if (w) w.style.transform = `scale(${z < 9 ? 0.5 : z < 12 ? 0.8 : 1.2})`;
+        if (!w) return;
+        const s = z <= 9 ? 0.45 : z <= 10 ? 0.6 : z <= 11 ? 0.75 : z <= 12 ? 0.9 : 1;
+        w.style.transform = `scale(${s})`;
       });
 
       // ─── LIVE GPS ──────────────────────────────────────────
@@ -768,7 +848,7 @@
             iconSize: [0, 0],
             html: `<div class="live-marker-wrapper">
                     <div class="live-ring"></div>
-                    <div class="live-core"></div>
+                    <div class="live-core"><img src="innoptus_icon_wit.png" alt="Innoptus" /></div>
                   </div>`,
           }),
           zIndexOffset: 1000,
@@ -777,11 +857,22 @@
           .bindPopup(speedPopupHtml(kmh), { maxWidth: 160 });
       }
 
+      let lastGpsUpdate = null;
+
+      function centreOnLive() {
+        if (liveMarker && firstFix) {
+          map.flyTo(liveMarker.getLatLng(), 12, { animate: true, duration: 1.8 });
+          firstFix = false;
+        }
+      }
+
       async function fetchLivePosition() {
         try {
           const data = await (await fetch(GPS_ENDPOINT)).json();
           if (!data || data.lat === undefined) return;
           const kmh = Math.round(data.speed || 0);
+          lastGpsUpdate = Date.now();
+          document.getElementById("stale-overlay").classList.remove("visible");
           if (!liveMarker) {
             liveMarker = createLiveMarker(data.lat, data.lng, kmh);
           } else {
@@ -789,10 +880,8 @@
             liveMarker.setPopupContent(speedPopupHtml(kmh));
           }
           if (firstFix) {
-            map.flyTo([data.lat, data.lng], 14, {
-              animate: true,
-              duration: 2.5,
-            });
+            map.stop();
+            map.flyTo([data.lat, data.lng], 12, { animate: true, duration: 1.8 });
             firstFix = false;
           }
         } catch (e) {
@@ -800,9 +889,17 @@
         }
       }
 
+      // Show stale overlay when GPS hasn't updated in 60s
+      setInterval(() => {
+        if (lastGpsUpdate !== null && Date.now() - lastGpsUpdate > 60000) {
+          document.getElementById("stale-overlay").classList.add("visible");
+        }
+      }, 3000);
+
       // ─── FAKE LIVE MARKER (temporary — replace with live tracking below) ──
       const _fakePos = STINTS[1][Math.floor(STINTS[1].length / 2)];
       liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 47);
+      lastGpsUpdate = Date.now() - 70000; // ← TEST: remove when going live
       // ── END FAKE MARKER ─────────────────────────────────────────────────
 
       // Uncomment to enable live tracking (and remove fake marker above):
