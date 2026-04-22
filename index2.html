@@ -55,24 +55,18 @@
         box-sizing: border-box;
       }
 
-      /* ─── LAYOUT: flex column fills full iframe height ─────── */
-      html,
-      body {
-        height: 100dvh;
-        overflow: hidden;
-      }
-
       body {
         background: var(--prussian-blue);
         color: var(--brand-white);
         font-family: "Mulish", sans-serif;
-        display: flex;
-        flex-direction: column;
       }
 
       /* ─── HEADER ──────────────────────────────────────────── */
       header {
-        flex-shrink: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -80,8 +74,8 @@
         height: 60px;
         background: var(--prussian-blue);
         border-bottom: 2px solid var(--green-munseli);
-        position: relative;
         z-index: 9999;
+        transform: translateZ(0);
       }
       .header-brand {
         display: flex;
@@ -104,10 +98,12 @@
 
       /* ─── MAP ─────────────────────────────────────────────── */
       #map {
-        flex: 1;
-        position: relative;
+        position: fixed;
+        top: 60px;
+        bottom: 150px;
+        left: 0;
+        right: 0;
         background: var(--prussian-blue);
-        z-index: 1;
       }
 
       /* ─── MARKERS ─────────────────────────────────────────── */
@@ -379,8 +375,8 @@
       /* ─── WAITING / STALE OVERLAYS ───────────────────────── */
       #waiting-overlay,
       #stale-overlay {
-        position: absolute;
-        top: 18px;
+        position: fixed;
+        top: 78px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 2000;
@@ -423,15 +419,18 @@
 
       /* ─── FOOTER ──────────────────────────────────────────── */
       footer {
-        flex-shrink: 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         height: 150px;
         background: var(--prussian-blue);
         border-top: 2px solid var(--green-munseli);
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
         z-index: 9999;
+        transform: translateZ(0);
       }
       .footer-logo {
         height: 130px;
@@ -442,6 +441,10 @@
         header {
           height: 52px;
           padding: 0 14px;
+        }
+        #map {
+          top: 52px;
+          bottom: 64px;
         }
         .logo-img {
           height: 26px;
@@ -486,21 +489,21 @@
       </div>
     </header>
 
-    <div id="map">
-      <div id="waiting-overlay">
-        <div class="stale-icon">⏳</div>
-        <div>
-          <div class="stale-title">Waiting for start</div>
-          <div class="stale-desc">Expected start: April 28th, 9:00 AM</div>
-        </div>
-      </div>
+    <div id="map"></div>
 
-      <div id="stale-overlay">
-        <div class="stale-icon">⚠️</div>
-        <div>
-          <div class="stale-title">Location Unavailable</div>
-          <div class="stale-desc">Live tracking signal lost</div>
-        </div>
+    <div id="waiting-overlay">
+      <div class="stale-icon">⏳</div>
+      <div>
+        <div class="stale-title">Waiting for start</div>
+        <div class="stale-desc">Expected start: April 28th, 9:00 AM</div>
+      </div>
+    </div>
+
+    <div id="stale-overlay">
+      <div class="stale-icon">⚠️</div>
+      <div>
+        <div class="stale-title">Location Unavailable</div>
+        <div class="stale-desc">Live tracking signal lost</div>
       </div>
     </div>
 
@@ -570,7 +573,7 @@
       });
 
       // ─── BOOTSTRAP ─────────────────────────────────────────
-      fetch("mapStyle.json")
+      fetch("mapStyle.json") // 👈 path to your JSON file
         .then((r) => r.json())
         .then((style) => {
           L.maplibreGL({
