@@ -74,7 +74,8 @@
         height: 60px;
         background: var(--prussian-blue);
         border-bottom: 2px solid var(--green-munseli);
-        z-index: 1000;
+        z-index: 9999;
+        transform: translateZ(0);
       }
       .header-brand {
         display: flex;
@@ -428,8 +429,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
-        padding-bottom: env(safe-area-inset-bottom);
+        z-index: 9999;
+        transform: translateZ(0);
       }
       .footer-logo {
         height: 130px;
