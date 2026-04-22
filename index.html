@@ -42,7 +42,6 @@
     <link rel="preload" as="image" href="4itego.png" />
 
     <style>
-
       :root {
         --prussian-blue: #192c46;
         --bdazzled-blue: #2754a4;
@@ -60,15 +59,14 @@
         background: var(--prussian-blue);
         color: var(--brand-white);
         font-family: "Mulish", sans-serif;
-        height: 100vh;
-        height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
       }
 
       /* ─── HEADER ──────────────────────────────────────────── */
       header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -77,7 +75,6 @@
         background: var(--prussian-blue);
         border-bottom: 2px solid var(--green-munseli);
         z-index: 1000;
-        flex-shrink: 0;
       }
       .header-brand {
         display: flex;
@@ -100,7 +97,11 @@
 
       /* ─── MAP ─────────────────────────────────────────────── */
       #map {
-        flex: 1;
+        position: fixed;
+        top: 60px;
+        bottom: 150px;
+        left: 0;
+        right: 0;
         background: var(--prussian-blue);
       }
 
@@ -120,6 +121,7 @@
         animation: ring-pulse 2s infinite;
         box-shadow: 0 0 12px var(--green-munseli);
         z-index: 1;
+        pointer-events: none;
       }
       .live-core {
         position: absolute;
@@ -129,7 +131,7 @@
         z-index: 2;
       }
       .live-core img {
-        height: 22px;
+        height: 18px;
         width: auto;
         display: block;
         pointer-events: none;
@@ -248,6 +250,14 @@
         gap: 4px;
         padding: 10px 14px 2px;
       }
+      .live-popup-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--brand-white);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+      }
       .live-popup-label {
         color: var(--green-munseli);
         font-size: 10px;
@@ -361,7 +371,8 @@
         letter-spacing: 1px;
       }
 
-      /* ─── STALE GPS OVERLAY ──────────────────────────────── */
+      /* ─── WAITING / STALE OVERLAYS ───────────────────────── */
+      #waiting-overlay,
       #stale-overlay {
         position: fixed;
         top: 78px;
@@ -383,6 +394,10 @@
         backdrop-filter: blur(6px);
         white-space: nowrap;
       }
+      #waiting-overlay {
+        border-color: rgba(0, 170, 119, 0.75);
+      }
+      #waiting-overlay.visible,
       #stale-overlay.visible {
         opacity: 1;
       }
@@ -403,6 +418,10 @@
 
       /* ─── FOOTER ──────────────────────────────────────────── */
       footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         height: 150px;
         background: var(--prussian-blue);
         border-top: 2px solid var(--green-munseli);
@@ -410,7 +429,6 @@
         align-items: center;
         justify-content: center;
         z-index: 1000;
-        flex-shrink: 0;
         padding-bottom: env(safe-area-inset-bottom);
       }
       .footer-logo {
@@ -422,6 +440,10 @@
         header {
           height: 52px;
           padding: 0 14px;
+        }
+        #map {
+          top: 52px;
+          bottom: 64px;
         }
         .logo-img {
           height: 26px;
@@ -467,6 +489,14 @@
     </header>
 
     <div id="map"></div>
+
+    <div id="waiting-overlay">
+      <div class="stale-icon">⏳</div>
+      <div>
+        <div class="stale-title">Waiting for start</div>
+        <div class="stale-desc">Expected start: April 28th, 9:00 AM</div>
+      </div>
+    </div>
 
     <div id="stale-overlay">
       <div class="stale-icon">⚠️</div>
@@ -549,7 +579,7 @@
             style,
           }).addTo(map);
           addOverlays();
-          map.once("moveend", centreOnLive);
+          setTimeout(centreOnLive, 600);
         })
         .catch((err) => {
           console.warn("Style failed, falling back to CARTO:", err);
@@ -562,7 +592,7 @@
             },
           ).addTo(map);
           addOverlays();
-          map.once("moveend", centreOnLive);
+          setTimeout(centreOnLive, 600);
         });
 
       // ─── OVERLAYS (routes + markers) ───────────────────────
@@ -828,13 +858,15 @@
         const z = map.getZoom();
         const w = document.querySelector(".live-marker-wrapper");
         if (!w) return;
-        const s = z <= 9 ? 0.45 : z <= 10 ? 0.6 : z <= 11 ? 0.75 : z <= 12 ? 0.9 : 1;
+        const s =
+          z <= 9 ? 0.45 : z <= 10 ? 0.6 : z <= 11 ? 0.75 : z <= 12 ? 0.9 : 1;
         w.style.transform = `scale(${s})`;
       });
 
       // ─── LIVE GPS ──────────────────────────────────────────
       function speedPopupHtml(kmh) {
         return `<div class="live-popup-inner">
+          <div class="live-popup-name">Infinite Apollo</div>
           <div class="live-popup-label">Current Speed</div>
           <div class="live-popup-speed">${kmh}</div>
           <div class="live-popup-unit">km/h</div>
@@ -861,7 +893,10 @@
 
       function centreOnLive() {
         if (liveMarker && firstFix) {
-          map.flyTo(liveMarker.getLatLng(), 12, { animate: true, duration: 1.8 });
+          map.flyTo(liveMarker.getLatLng(), 12, {
+            animate: true,
+            duration: 1.8,
+          });
           firstFix = false;
         }
       }
@@ -873,6 +908,9 @@
           const kmh = Math.round(data.speed || 0);
           lastGpsUpdate = Date.now();
           document.getElementById("stale-overlay").classList.remove("visible");
+          document
+            .getElementById("waiting-overlay")
+            .classList.remove("visible");
           if (!liveMarker) {
             liveMarker = createLiveMarker(data.lat, data.lng, kmh);
           } else {
@@ -881,7 +919,10 @@
           }
           if (firstFix) {
             map.stop();
-            map.flyTo([data.lat, data.lng], 12, { animate: true, duration: 1.8 });
+            map.flyTo([data.lat, data.lng], 12, {
+              animate: true,
+              duration: 1.8,
+            });
             firstFix = false;
           }
         } catch (e) {
@@ -897,9 +938,10 @@
       }, 3000);
 
       // ─── FAKE LIVE MARKER (temporary — replace with live tracking below) ──
-      const _fakePos = STINTS[1][Math.floor(STINTS[1].length / 2)];
-      liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 47);
-      lastGpsUpdate = Date.now() - 70000; // ← TEST: remove when going live
+      const _fakePos = STINTS[0][0];
+      liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 0);
+      document.getElementById("waiting-overlay").classList.add("visible");
+      // lastGpsUpdate = Date.now() - 70000; // ← uncomment to test stale overlay
       // ── END FAKE MARKER ─────────────────────────────────────────────────
 
       // Uncomment to enable live tracking (and remove fake marker above):
