@@ -25,6 +25,9 @@
     <!-- MapLibre GL Leaflet binding -->
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 
+    <!-- Confetti -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script> -->
+
     <!-- Mulish font (preconnect first for speed) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -45,8 +48,10 @@
       :root {
         --prussian-blue: #192c46;
         --bdazzled-blue: #2754a4;
+        --break-blue: #4a7fd4;
         --green-munseli: #00aa77;
         --brand-white: #f9fbfb;
+        --amber: #f5a623;
       }
 
       * {
@@ -128,6 +133,9 @@
         z-index: 1;
         pointer-events: none;
       }
+      .live-ring.paused {
+        display: none;
+      }
       .live-core {
         position: absolute;
         top: 0;
@@ -152,6 +160,7 @@
         }
       }
 
+      /* Partner stop marker (teardrop) */
       .partner-marker {
         width: 30px;
         height: 30px;
@@ -169,6 +178,27 @@
         width: 10px;
         height: 10px;
         background: var(--green-munseli);
+        border-radius: 50%;
+      }
+
+      /* ─── BREAK MARKER ───────────────────────────────────── */
+      .break-marker {
+        width: 20px;
+        height: 20px;
+        background: var(--prussian-blue);
+        border: 2px solid var(--break-blue);
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      }
+      .break-marker div {
+        transform: rotate(45deg);
+        width: 7px;
+        height: 7px;
+        background: var(--break-blue);
         border-radius: 50%;
       }
 
@@ -247,6 +277,32 @@
         object-fit: contain;
       }
 
+      /* Break tooltip */
+      .break-tt.leaflet-tooltip {
+        background: var(--prussian-blue) !important;
+        border: 1px solid var(--break-blue) !important;
+        box-shadow: 0 4px 12px rgba(74, 127, 212, 0.2) !important;
+        color: var(--brand-white) !important;
+        font-family: "Mulish", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 10px !important;
+        border-radius: 6px !important;
+        white-space: nowrap;
+      }
+      .break-tt.leaflet-tooltip::before {
+        display: none !important;
+      }
+      .break-tt-label {
+        color: var(--break-blue);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 1px;
+      }
+
       /* Live marker popup */
       .live-popup-inner {
         display: flex;
@@ -280,6 +336,12 @@
         font-size: 11px;
         color: rgba(249, 251, 251, 0.55);
         font-weight: 600;
+      }
+      .live-popup-time {
+        font-size: 10px;
+        color: rgba(249, 251, 251, 0.4);
+        margin-top: 4px;
+        font-weight: 400;
       }
 
       /* Partner popup */
@@ -317,6 +379,38 @@
       .partner-popup-time {
         color: rgba(249, 251, 251, 0.7);
         font-size: 12px;
+        text-align: center;
+      }
+
+      /* Break popup */
+      .break-popup .leaflet-popup-content-wrapper {
+        border-color: var(--break-blue) !important;
+      }
+      .break-popup .leaflet-popup-tip {
+        background: var(--prussian-blue) !important;
+      }
+      .break-popup-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 4px 8px 2px;
+      }
+      .break-popup-icon {
+        font-size: 16px;
+        line-height: 1;
+      }
+      .break-popup-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--break-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        text-align: center;
+      }
+      .break-popup-time {
+        color: rgba(249, 251, 251, 0.7);
+        font-size: 11px;
         text-align: center;
       }
 
@@ -378,7 +472,8 @@
 
       /* ─── WAITING / STALE OVERLAYS ───────────────────────── */
       #waiting-overlay,
-      #stale-overlay {
+      #stale-overlay,
+      #finish-overlay {
         position: absolute;
         top: 18px;
         left: 50%;
@@ -402,8 +497,14 @@
       #waiting-overlay {
         border-color: rgba(0, 170, 119, 0.75);
       }
+      #finish-overlay {
+        border-color: var(--green-munseli);
+        pointer-events: auto;
+        cursor: pointer;
+      }
       #waiting-overlay.visible,
-      #stale-overlay.visible {
+      #stale-overlay.visible,
+      #finish-overlay.visible {
         opacity: 1;
       }
       .stale-icon {
@@ -495,11 +596,19 @@
         </div>
       </div>
 
+      <div id="finish-overlay" onclick="this.classList.remove('visible')">
+        <div class="stale-icon">🏁</div>
+        <div>
+          <div class="stale-title">Infinite Apollo has arrived!</div>
+          <div class="stale-desc">Thanks for following along!</div>
+        </div>
+      </div>
+
       <div id="stale-overlay">
         <div class="stale-icon">⚠️</div>
         <div>
           <div class="stale-title">Location Unavailable</div>
-          <div class="stale-desc">Live tracking signal lost</div>
+          <div class="stale-desc">Showing last known location</div>
         </div>
       </div>
     </div>
@@ -516,7 +625,59 @@
       let liveMarker = null;
       let firstFix = true;
 
+      // ─── SCHEDULE ──────────────────────────────────────────
+      // STINTS array index:  0=1_1, 1=1_2, 2=2_1, 3=2_2, 4=3_1, 5=3_2, 6=4_1, 7=4_2, 8=5_1, 9=5_2
+      const STINT_TIMES = [
+        { label: "Stint 1", time: "09:00 – 09:15" },
+        { label: "Stint 2", time: "09:25 – 09:30" },
+        { label: "Stint 3", time: "10:00 – 11:00" },
+        { label: "Stint 4", time: "11:45 – 12:00" },
+        { label: "Stint 5", time: "12:30 – 13:30" },
+        { label: "Stint 6", time: "13:55 – 14:00" },
+        { label: "Stint 7", time: "15:00 – 15:35" },
+        { label: "Stint 8", time: "15:55 – 16:00" },
+        { label: "Stint 9", time: "17:00 – 17:15" },
+        { label: "Stint 10", time: "17:20 – 17:30" },
+      ];
+
+      // ─── SCHEDULED BREAK LOCATIONS ─────────────────────────
+      // Each break is the last point of a Stint x_1 segment
+      const SCHEDULED_BREAKS = [
+        {
+          name: "Scheduled Break",
+          time: "09:15 – 09:25",
+          coords: BREAK_LOCATIONS[0],
+        },
+        {
+          name: "Lunch Break",
+          time: "11:00 – 11:45",
+          coords: BREAK_LOCATIONS[1],
+        },
+        {
+          name: "Scheduled Break",
+          time: "13:30 – 13:55",
+          coords: BREAK_LOCATIONS[2],
+        },
+        {
+          name: "Photo Break",
+          time: "15:35 – 15:55",
+          coords: BREAK_LOCATIONS[3],
+        },
+        {
+          name: "Photo Break",
+          time: "17:15 – 17:20",
+          coords: BREAK_LOCATIONS[4],
+        },
+      ];
+
       // ─── PARTNERS ──────────────────────────────────────────
+      // Partner stop coords = start of each x_2 segment = end of each x_1 segment... no:
+      // Start (Sibelco)  = STINTS[0][0]  (start of Stint 1_1)
+      // Stop 2 (Indupol) = STINTS[1][STINTS[1].length-1]  (end of Stint 1_2)
+      // Stop 3 (DEME)    = STINTS[3][STINTS[3].length-1]  (end of Stint 2_2)
+      // Stop 4 (PWC)     = STINTS[5][STINTS[5].length-1]  (end of Stint 3_2)
+      // Stop 5 (KBC)     = STINTS[7][STINTS[7].length-1]  (end of Stint 4_2)
+      // Finish (4itego)  = STINTS[9][STINTS[9].length-1]  (end of Stint 5_2)
       const PARTNERS = [
         {
           role: "Start",
@@ -527,31 +688,31 @@
         {
           role: "Second Stop",
           time: "09:30 – 10:00",
-          coords: STINTS[1][0],
+          coords: STINTS[1][STINTS[1].length - 1],
           logo: "INDUPOL_LOGO_RGB-01-1.svg",
         },
         {
           role: "Third Stop",
           time: "12:00 – 12:30",
-          coords: STINTS[2][0],
+          coords: STINTS[3][STINTS[3].length - 1],
           logo: "DEME.BR_BIG.svg",
         },
         {
           role: "Fourth Stop",
           time: "14:00 – 15:00",
-          coords: STINTS[3][0],
+          coords: STINTS[5][STINTS[5].length - 1],
           logo: "PWC.svg",
         },
         {
           role: "Fifth Stop",
           time: "16:00 – 17:00",
-          coords: STINTS[4][0],
+          coords: STINTS[7][STINTS[7].length - 1],
           logo: "KBC_logo.svg",
         },
         {
           role: "Finish",
           time: "17:30 – 19:00",
-          coords: STINTS[4][STINTS[4].length - 1],
+          coords: STINTS[9][STINTS[9].length - 1],
           logo: "4itego.png",
         },
       ];
@@ -573,11 +734,8 @@
       fetch("mapStyle.json")
         .then((r) => r.json())
         .then((style) => {
-          L.maplibreGL({
-            style,
-          }).addTo(map);
+          L.maplibreGL({ style }).addTo(map);
           addOverlays();
-          setTimeout(centreOnLive, 600);
         })
         .catch((err) => {
           console.warn("Style failed, falling back to CARTO:", err);
@@ -590,17 +748,7 @@
             },
           ).addTo(map);
           addOverlays();
-          setTimeout(centreOnLive, 600);
         });
-
-      // ─── OVERLAYS (routes + markers) ───────────────────────
-      const STINT_TIMES = [
-        { label: "Stint 1", time: "09:00 – 09:30" },
-        { label: "Stint 2", time: "10:00 – 12:00" },
-        { label: "Stint 3", time: "12:30 – 14:00" },
-        { label: "Stint 4", time: "15:00 – 16:00" },
-        { label: "Stint 5", time: "17:00 – 17:30" },
-      ];
 
       // ─── SPONSOR LOCATIONS ─────────────────────────────────
       const SPONSORS = [
@@ -777,7 +925,9 @@
         },
       ];
 
+      // ─── OVERLAYS ──────────────────────────────────────────
       function addOverlays() {
+        // Draw all 10 route segments
         STINTS.forEach((coords, i) => {
           L.polyline(coords, {
             color: "#00aa77",
@@ -785,6 +935,8 @@
             opacity: 0.85,
             interactive: false,
           }).addTo(map);
+
+          // Wide invisible line for tooltip interaction
           L.polyline(coords, { color: "#00aa77", weight: 22, opacity: 0.001 })
             .addTo(map)
             .bindTooltip(
@@ -796,6 +948,7 @@
             .on("dblclick", (e) => L.DomEvent.stop(e));
         });
 
+        // ── Partner stop markers ──────────────────────────────
         const partnerIcon = L.divIcon({
           className: "",
           iconSize: [30, 30],
@@ -826,6 +979,41 @@
           }
         });
 
+        // ── Scheduled break markers ───────────────────────────
+        const breakIcon = L.divIcon({
+          className: "",
+          iconSize: [20, 20],
+          iconAnchor: [10, 24],
+          html: '<div class="break-marker"><div></div></div>',
+        });
+
+        SCHEDULED_BREAKS.forEach((b) => {
+          const icon =
+            b.name === "Lunchtime"
+              ? "🍽️"
+              : b.name.toLowerCase().includes("photo")
+                ? "📸"
+                : "⏸️";
+          const popupHtml = `
+            <div class="break-popup-inner">
+              <div class="break-popup-icon">${icon}</div>
+              <div class="break-popup-name">${b.name}</div>
+              <div class="break-popup-time">${b.time}</div>
+            </div>`;
+          const ttHtml = `<span class="break-tt-label">${b.name}</span>${b.time}`;
+          const marker = L.marker(b.coords, { icon: breakIcon })
+            .addTo(map)
+            .bindPopup(popupHtml, { maxWidth: 150, className: "break-popup" });
+          if (!isTouch) {
+            marker.bindTooltip(ttHtml, {
+              className: "break-tt",
+              direction: "top",
+              offset: [0, -16],
+            });
+          }
+        });
+
+        // ── Sponsor markers ───────────────────────────────────
         const sponsorIcon = L.divIcon({
           className: "",
           iconSize: [12, 12],
@@ -862,88 +1050,148 @@
       });
 
       // ─── LIVE GPS ──────────────────────────────────────────
-      function speedPopupHtml(kmh) {
+      function formatCEST(epochSeconds) {
+        return new Date(epochSeconds * 1000).toLocaleTimeString("en-GB", {
+          timeZone: "Europe/Brussels",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+
+      function speedPopupHtml(kmh, epochTime) {
+        const timeStr = epochTime ? formatCEST(epochTime) + " CEST" : "—";
         return `<div class="live-popup-inner">
           <div class="live-popup-name">Infinite Apollo</div>
           <div class="live-popup-label">Current Speed</div>
           <div class="live-popup-speed">${kmh}</div>
           <div class="live-popup-unit">km/h</div>
+          <div class="live-popup-time">Last updated: ${timeStr}</div>
         </div>`;
       }
 
-      function createLiveMarker(lat, lng, kmh = 0) {
+      function createLiveMarker(lat, lng, kmh = 0, isoTime = null) {
         return L.marker([lat, lng], {
           icon: L.divIcon({
             className: "",
             iconSize: [0, 0],
             html: `<div class="live-marker-wrapper">
-                    <div class="live-ring"></div>
+                    <div class="live-ring paused"></div>
                     <div class="live-core"><img src="innoptus_icon_wit.png" alt="Innoptus" /></div>
                   </div>`,
           }),
           zIndexOffset: 1000,
         })
           .addTo(map)
-          .bindPopup(speedPopupHtml(kmh), { maxWidth: 160 });
+          .bindPopup(speedPopupHtml(kmh, isoTime), { maxWidth: 180 });
       }
 
-      let lastGpsUpdate = null;
+      let lastDbTime = null;
+      let interpRAF = null;
+      let finishTriggered = false;
+      const POLL_MS = 5000;
+      const INTERP_MS = 4500;
+      const FINISH_COORDS = STINTS[9][STINTS[9].length - 1];
 
-      function centreOnLive() {
-        if (liveMarker && firstFix) {
-          map.flyTo(liveMarker.getLatLng(), 12, {
-            animate: true,
-            duration: 1.8,
+      function fireFinishConfetti() {
+        const colors = ["#00aa77", "#2754a4", "#f9fbfb", "#ffd700"];
+        const burst = (origin) =>
+          confetti({
+            particleCount: 120,
+            spread: 80,
+            origin,
+            colors,
+            zIndex: 9999,
           });
+        burst({ x: 0.3, y: 0.75 });
+        setTimeout(() => burst({ x: 0.7, y: 0.75 }), 150);
+        setTimeout(() => burst({ x: 0.5, y: 0.65 }), 300);
+      }
+
+      function moveMarkerTo(lat, lng) {
+        if (interpRAF) {
+          cancelAnimationFrame(interpRAF);
+          interpRAF = null;
+        }
+        const from = liveMarker.getLatLng();
+        let startTime = null;
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          const t = Math.min((ts - startTime) / INTERP_MS, 1);
+          liveMarker.setLatLng([
+            from.lat + (lat - from.lat) * t,
+            from.lng + (lng - from.lng) * t,
+          ]);
+          if (t < 1) interpRAF = requestAnimationFrame(step);
+          else interpRAF = null;
+        }
+        interpRAF = requestAnimationFrame(step);
+      }
+
+      function centreOnLive(lat, lng) {
+        if (firstFix && lat !== undefined && lng !== undefined) {
+          map.stop();
+          map.flyTo([lat, lng], 14, { animate: true, duration: 1.8 });
           firstFix = false;
         }
+      }
+
+      const STALE_MS = 30000;
+
+      function applyStaleState(isoTime) {
+        const isStale =
+          !isoTime ||
+          Date.now() - new Date(isoTime * 1000).getTime() > STALE_MS;
+        document
+          .getElementById("stale-overlay")
+          .classList.toggle("visible", isStale && !finishTriggered);
+        const ring = document.querySelector(".live-ring");
+        if (ring) ring.classList.toggle("paused", isStale);
+        return isStale;
       }
 
       async function fetchLivePosition() {
         try {
           const data = await (await fetch(GPS_ENDPOINT)).json();
           if (!data || data.lat === undefined) return;
-          const kmh = Math.round(data.speed || 0);
-          lastGpsUpdate = Date.now();
-          document.getElementById("stale-overlay").classList.remove("visible");
-          document
-            .getElementById("waiting-overlay")
-            .classList.remove("visible");
+          const raw = data.spd || 0;
+          const kmh = raw < 0.5 ? "0" : raw.toFixed(1);
+          const isoTime = data.time || null;
+          if (isoTime) lastDbTime = new Date(isoTime * 1000);
+
           if (!liveMarker) {
-            liveMarker = createLiveMarker(data.lat, data.lng, kmh);
+            liveMarker = createLiveMarker(data.lat, data.lng, kmh, isoTime);
           } else {
-            liveMarker.setLatLng([data.lat, data.lng]);
-            liveMarker.setPopupContent(speedPopupHtml(kmh));
+            moveMarkerTo(data.lat, data.lng);
+            liveMarker.setPopupContent(speedPopupHtml(kmh, isoTime));
           }
-          if (firstFix) {
-            map.stop();
-            map.flyTo([data.lat, data.lng], 12, {
-              animate: true,
-              duration: 1.8,
-            });
-            firstFix = false;
+
+          if (!finishTriggered) {
+            const dist = L.latLng(data.lat, data.lng).distanceTo(
+              L.latLng(FINISH_COORDS[0], FINISH_COORDS[1]),
+            );
+            if (dist <= 80) {
+              finishTriggered = true;
+              document
+                .getElementById("finish-overlay")
+                .classList.add("visible");
+              // setTimeout(fireFinishConfetti, 3000);
+            }
           }
+
+          applyStaleState(isoTime);
+          centreOnLive(data.lat, data.lng);
         } catch (e) {
-          console.error("GPS Fetch Error", e);
+          console.error("GPS fetch error", e);
         }
       }
 
-      // Show stale overlay when GPS hasn't updated in 60s
-      setInterval(() => {
-        if (lastGpsUpdate !== null && Date.now() - lastGpsUpdate > 60000) {
-          document.getElementById("stale-overlay").classList.add("visible");
-        }
-      }, 3000);
-
-      // ─── FAKE LIVE MARKER (temporary — replace with live tracking below) ──
+      // ─── FAKE LIVE MARKER (live tracking temporarily disabled) ───
       const _fakePos = STINTS[0][0];
       liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 0);
       document.getElementById("waiting-overlay").classList.add("visible");
-      // lastGpsUpdate = Date.now() - 70000; // ← uncomment to test stale overlay
-      // ── END FAKE MARKER ─────────────────────────────────────────────────
 
-      // Uncomment to enable live tracking (and remove fake marker above):
-      // setInterval(fetchLivePosition, 30000);
+      // setInterval(fetchLivePosition, POLL_MS);
       // fetchLivePosition();
     </script>
   </body>
