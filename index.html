@@ -25,8 +25,9 @@
     <!-- MapLibre GL Leaflet binding -->
     <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 
-    <!-- Confetti -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script> -->
+    <!-- Preconnect to CDNs so DNS+TCP is ready when scripts download -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://unpkg.com" />
 
     <!-- Mulish font (preconnect first for speed) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -471,7 +472,6 @@
       }
 
       /* ─── WAITING / STALE OVERLAYS ───────────────────────── */
-      #waiting-overlay,
       #stale-overlay,
       #finish-overlay {
         position: absolute;
@@ -494,15 +494,11 @@
         backdrop-filter: blur(6px);
         white-space: nowrap;
       }
-      #waiting-overlay {
-        border-color: rgba(0, 170, 119, 0.75);
-      }
       #finish-overlay {
         border-color: var(--green-munseli);
         pointer-events: auto;
         cursor: pointer;
       }
-      #waiting-overlay.visible,
       #stale-overlay.visible,
       #finish-overlay.visible {
         opacity: 1;
@@ -588,14 +584,6 @@
     </header>
 
     <div id="map">
-      <div id="waiting-overlay">
-        <div class="stale-icon">⏳</div>
-        <div>
-          <div class="stale-title">Waiting for start</div>
-          <div class="stale-desc">Expected start: April 28th, 9:00 AM</div>
-        </div>
-      </div>
-
       <div id="finish-overlay" onclick="this.classList.remove('visible')">
         <div class="stale-icon">🏁</div>
         <div>
@@ -618,12 +606,12 @@
     </footer>
 
     <script src="routeData.js"></script>
+    <script src="mapStyle.js"></script>
     <script>
       // ─── CONFIG ────────────────────────────────────────────
       const GPS_ENDPOINT =
         "https://solar-tracker-ab9a8-default-rtdb.europe-west1.firebasedatabase.app/gps/latest.json";
       let liveMarker = null;
-      let firstFix = true;
 
       // ─── SCHEDULE ──────────────────────────────────────────
       // STINTS array index:  0=1_1, 1=1_2, 2=2_1, 3=2_2, 4=3_1, 5=3_2, 6=4_1, 7=4_2, 8=5_1, 9=5_2
@@ -731,14 +719,23 @@
       });
 
       // ─── BOOTSTRAP ─────────────────────────────────────────
-      fetch("mapStyle.json")
-        .then((r) => r.json())
-        .then((style) => {
-          L.maplibreGL({ style }).addTo(map);
+      function flyToCarWhenReady() {
+        if (liveMarker) {
+          const ll = liveMarker.getLatLng();
+          map.stop();
+          map.flyTo([ll.lat, ll.lng], 14, { animate: true, duration: 1.8 });
+        }
+      }
+
+      Promise.resolve().then(() => {
+        if (typeof MAP_STYLE !== "undefined") {
+          const glLayer = L.maplibreGL({ style: MAP_STYLE }).addTo(map);
           addOverlays();
-        })
-        .catch((err) => {
-          console.warn("Style failed, falling back to CARTO:", err);
+          glLayer
+            .getMaplibreMap()
+            .once("load", () => setTimeout(flyToCarWhenReady, 3000));
+        } else {
+          console.warn("MAP_STYLE not found, falling back to CARTO");
           L.tileLayer(
             "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
             {
@@ -748,7 +745,9 @@
             },
           ).addTo(map);
           addOverlays();
-        });
+          setTimeout(flyToCarWhenReady, 3000);
+        }
+      });
 
       // ─── SPONSOR LOCATIONS ─────────────────────────────────
       const SPONSORS = [
@@ -926,17 +925,19 @@
       ];
 
       // ─── OVERLAYS ──────────────────────────────────────────
+      let activeStintLine = null;
+      const STINT_DEFAULT = { weight: 5, opacity: 0.85, color: "#00aa77" };
+      const STINT_ACTIVE = { weight: 5, opacity: 1, color: "#00e89a" };
+
       function addOverlays() {
         // Draw all 10 route segments
         STINTS.forEach((coords, i) => {
-          L.polyline(coords, {
-            color: "#00aa77",
-            weight: 5,
-            opacity: 0.85,
+          const visLine = L.polyline(coords, {
+            ...STINT_DEFAULT,
             interactive: false,
           }).addTo(map);
 
-          // Wide invisible line for tooltip interaction
+          // Wide invisible line for tooltip + click interaction
           L.polyline(coords, { color: "#00aa77", weight: 22, opacity: 0.001 })
             .addTo(map)
             .bindTooltip(
@@ -944,8 +945,28 @@
               { className: "stint-tt", sticky: true },
             )
             .on("mousedown", (e) => L.DomEvent.stop(e))
-            .on("click", (e) => L.DomEvent.stop(e))
-            .on("dblclick", (e) => L.DomEvent.stop(e));
+            .on("dblclick", (e) => L.DomEvent.stop(e))
+            .on("click", (e) => {
+              L.DomEvent.stop(e);
+              if (activeStintLine && activeStintLine !== visLine) {
+                activeStintLine.setStyle(STINT_DEFAULT);
+              }
+              if (activeStintLine === visLine) {
+                visLine.setStyle(STINT_DEFAULT);
+                activeStintLine = null;
+              } else {
+                visLine.setStyle(STINT_ACTIVE);
+                visLine.bringToFront();
+                activeStintLine = visLine;
+              }
+            });
+        });
+
+        map.on("click", () => {
+          if (activeStintLine) {
+            activeStintLine.setStyle(STINT_DEFAULT);
+            activeStintLine = null;
+          }
         });
 
         // ── Partner stop markers ──────────────────────────────
@@ -1059,8 +1080,18 @@
         });
       }
 
+      function relativeTime(epochSeconds) {
+        if (!epochSeconds) return "—";
+        const s = Math.floor((Date.now() - epochSeconds * 1000) / 1000);
+        if (s < 10) return "just now";
+        if (s < 60) return `${s} seconds ago`;
+        if (s < 120) return "1 minute ago";
+        if (s < 3600) return `${Math.floor(s / 60)} minutes ago`;
+        return `${Math.floor(s / 3600)} hours ago`;
+      }
+
       function speedPopupHtml(kmh, epochTime) {
-        const timeStr = epochTime ? formatCEST(epochTime) + " CEST" : "—";
+        const timeStr = epochTime ? relativeTime(epochTime) : "—";
         return `<div class="live-popup-inner">
           <div class="live-popup-name">Infinite Apollo</div>
           <div class="live-popup-label">Current Speed</div>
@@ -1087,26 +1118,14 @@
       }
 
       let lastDbTime = null;
+      let lastKmh = "0";
+      let lastTargetLat = null;
+      let lastTargetLng = null;
       let interpRAF = null;
       let finishTriggered = false;
-      const POLL_MS = 5000;
-      const INTERP_MS = 4500;
+      const POLL_MS = 3000;
+      const INTERP_MS = 6000;
       const FINISH_COORDS = STINTS[9][STINTS[9].length - 1];
-
-      function fireFinishConfetti() {
-        const colors = ["#00aa77", "#2754a4", "#f9fbfb", "#ffd700"];
-        const burst = (origin) =>
-          confetti({
-            particleCount: 120,
-            spread: 80,
-            origin,
-            colors,
-            zIndex: 9999,
-          });
-        burst({ x: 0.3, y: 0.75 });
-        setTimeout(() => burst({ x: 0.7, y: 0.75 }), 150);
-        setTimeout(() => burst({ x: 0.5, y: 0.65 }), 300);
-      }
 
       function moveMarkerTo(lat, lng) {
         if (interpRAF) {
@@ -1126,14 +1145,6 @@
           else interpRAF = null;
         }
         interpRAF = requestAnimationFrame(step);
-      }
-
-      function centreOnLive(lat, lng) {
-        if (firstFix && lat !== undefined && lng !== undefined) {
-          map.stop();
-          map.flyTo([lat, lng], 14, { animate: true, duration: 1.8 });
-          firstFix = false;
-        }
       }
 
       const STALE_MS = 30000;
@@ -1158,11 +1169,18 @@
           const kmh = raw < 0.5 ? "0" : raw.toFixed(1);
           const isoTime = data.time || null;
           if (isoTime) lastDbTime = new Date(isoTime * 1000);
+          lastKmh = kmh;
 
           if (!liveMarker) {
             liveMarker = createLiveMarker(data.lat, data.lng, kmh, isoTime);
+            lastTargetLat = data.lat;
+            lastTargetLng = data.lng;
           } else {
-            moveMarkerTo(data.lat, data.lng);
+            if (data.lat !== lastTargetLat || data.lng !== lastTargetLng) {
+              moveMarkerTo(data.lat, data.lng);
+              lastTargetLat = data.lat;
+              lastTargetLng = data.lng;
+            }
             liveMarker.setPopupContent(speedPopupHtml(kmh, isoTime));
           }
 
@@ -1175,24 +1193,25 @@
               document
                 .getElementById("finish-overlay")
                 .classList.add("visible");
-              // setTimeout(fireFinishConfetti, 3000);
             }
           }
 
           applyStaleState(isoTime);
-          centreOnLive(data.lat, data.lng);
         } catch (e) {
           console.error("GPS fetch error", e);
         }
       }
 
-      // ─── FAKE LIVE MARKER (live tracking temporarily disabled) ───
-      const _fakePos = STINTS[0][0];
-      liveMarker = createLiveMarker(_fakePos[0], _fakePos[1], 0);
-      document.getElementById("waiting-overlay").classList.add("visible");
+      setInterval(fetchLivePosition, POLL_MS);
+      fetchLivePosition();
 
-      // setInterval(fetchLivePosition, POLL_MS);
-      // fetchLivePosition();
+      setInterval(() => {
+        if (liveMarker && liveMarker.isPopupOpen() && lastDbTime) {
+          liveMarker.setPopupContent(
+            speedPopupHtml(lastKmh, lastDbTime.getTime() / 1000),
+          );
+        }
+      }, 1000);
     </script>
   </body>
 </html>
